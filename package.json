@@ -1,0 +1,30 @@
+{
+  "name": "api_banco_prova_saep",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BistonN/api_banco_prova_saep.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BistonN/api_banco_prova_saep/issues"
+  },
+  "homepage": "https://github.com/BistonN/api_banco_prova_saep#readme",
+  "dependencies": {
+    "body-parser": "^2.2.2",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "helmet": "^8.1.0",
+    "http": "^0.0.1-security",
+    "morgan": "^1.10.1",
+    "mysql2": "^3.16.3",
+    "nodemon": "^3.1.11"
+  }
+}
