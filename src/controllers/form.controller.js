@@ -187,8 +187,7 @@ exports.getAllAnswerByStudent = async (req, res, next) => {
         const results = await mysql.execute(
             `SELECT id_questao, resposta_aluno, resposta_certa, token, created 
              FROM respostas 
-             WHERE token = ? AND nome = ?
-             GROUP BY id_questao`,
+             WHERE token = ? AND nome = ?;`,
             [res.locals.token, req.body.nome]
         );
 
