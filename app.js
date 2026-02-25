@@ -4,6 +4,8 @@ const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const helmet = require('helmet');
 
+const formRoute = require("./src/routes/form.route");
+
 app.use(morgan('dev'));
 
 app.use(helmet());
@@ -23,6 +25,8 @@ app.use((req, res, next) => {
     }
     next();
 });
+
+app.use("/form", formRoute);
 
 app.use((req, res, next) => {
     const error = new Error('Not found...');
