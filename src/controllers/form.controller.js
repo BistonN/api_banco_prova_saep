@@ -181,3 +181,25 @@ exports.insertAnswer = async (req, res) => {
         });
     }
 }
+
+exports.getAllAnswerByStudent = async (req, res, next) => {
+    try {
+        const results = await mysql.execute(
+            `SELECT id_questao, resposta_aluno, resposta_certa, token, created 
+             FROM respostas 
+             WHERE token = ? AND nome = ?
+             GROUP BY id_questao`,
+            [res.locals.token, req.body.nome]
+        );
+
+        return res.status(200).json({
+            message: "Get answers successfully",
+            results
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: "Error getting data",
+            error: error.message,
+        });
+    }
+}
