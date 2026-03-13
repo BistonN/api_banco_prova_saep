@@ -182,7 +182,7 @@ exports.insertAnswer = async (req, res) => {
     }
 }
 
-exports.getAllAnswerByStudent = async (req, res, next) => {
+exports.getAllAnswerByStudent = async (req, res) => {
     try {
         const results = await mysql.execute(
             `SELECT id_questao, resposta_aluno, resposta_certa, token, created 
