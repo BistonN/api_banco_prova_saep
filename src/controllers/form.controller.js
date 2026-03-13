@@ -185,9 +185,25 @@ exports.insertAnswer = async (req, res) => {
 exports.getAllAnswerByStudent = async (req, res) => {
     try {
         const results = await mysql.execute(
-            `SELECT id_questao, resposta_aluno, resposta_certa, token, created 
-             FROM respostas 
-             WHERE token = ? AND nome = ?;`,
+            `SELECT id_questao, 
+                    resposta_aluno, 
+                    resposta_certa, 
+                    token, 
+                    created 
+               FROM (
+                SELECT id_questao, 
+                       resposta_aluno, 
+                       resposta_certa, 
+                       token, 
+                       created,
+                       ROW_NUMBER() OVER (PARTITION BY id_questao, token ORDER BY created DESC) AS rn
+                  FROM respostas 
+                 WHERE token = ?
+                   AND nome  = ?
+                ) AS sub
+                WHERE rn = 1
+                ORDER BY created DESC;
+             ;`,
             [res.locals.token, req.body.nome]
         );
 
