@@ -186,8 +186,8 @@ exports.getAllAnswerByStudent = async (req, res) => {
     try {
         const results = await mysql.execute(
             `SELECT id_questao, 
-                    resposta_aluno, 
-                    resposta_certa, 
+                    UPPER(resposta_aluno) AS resposta_aluno, 
+                    UPPER(resposta_certa) AS resposta_certa, 
                     token, 
                     created 
                FROM (
