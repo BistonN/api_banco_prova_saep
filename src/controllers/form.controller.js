@@ -40,13 +40,14 @@ exports.insertFormToken = async (req, res, next) => {
             });
         }
 
-        for (const questionId of questionsIds) {
-            const query = `
-                INSERT INTO provas (id_questao, sub_token, full_token)
-                VALUES (?, ?, ?)
-            `;
-            
-            await mysql.execute(query, [questionId, subToken, fullToken]);
+        if (questionsIds.length > 0) {
+            const placeholders = questionsIds.map(() => '(?, ?, ?)').join(', ');
+            const query = `INSERT INTO provas (id_questao, sub_token, full_token) VALUES ${placeholders}`;
+            const params = [];
+            for (const questionId of questionsIds) {
+                params.push(questionId, subToken, fullToken);
+            }
+            await mysql.execute(query, params);
         }
 
         return res.status(201).json({

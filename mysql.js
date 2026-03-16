@@ -10,8 +10,7 @@ const pool = mysql.createPool({
     "waitForConnections": true,
     "connectionLimit": 10,
     "queueLimit": 0,
-    "enableKeepAlive": true,
-    "keepAliveInitialDelayMs": 0
+    "enableKeepAlive": true
 });
 
 pool.on('error', (error) => {
@@ -46,8 +45,7 @@ const pool_multi = mysql.createPool({
     "waitForConnections": true,
     "connectionLimit": 10,
     "queueLimit": 0,
-    "enableKeepAlive": true,
-    "keepAliveInitialDelayMs": 0
+    "enableKeepAlive": true
 });
 
 pool_multi.on('error', (error) => {

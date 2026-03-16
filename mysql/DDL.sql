@@ -56,8 +56,9 @@ CREATE TABLE IF NOT EXISTS `banco_prova_saep`.`provas` (
   `full_token` VARCHAR(255) NOT NULL,
   `created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP(),
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `sub_token` (`sub_token` ASC) VISIBLE,
-  UNIQUE INDEX `full_token` (`full_token` ASC) VISIBLE,
+  INDEX `idx_sub_token` (`sub_token` ASC) VISIBLE,
+  INDEX `idx_full_token` (`full_token` ASC) VISIBLE,
+  UNIQUE INDEX `ux_provas_questao_token` (`id_questao`, `sub_token` ASC) VISIBLE,
   INDEX `fk_provas_questoes` (`id_questao` ASC) VISIBLE,
   CONSTRAINT `fk_provas_questoes`
     FOREIGN KEY (`id_questao`)
