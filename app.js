@@ -5,13 +5,13 @@ const bodyParser = require('body-parser');
 const helmet = require('helmet');
 
 const formRoute = require("./src/routes/form.route");
+const questaoRoute = require("./src/routes/questao.route");
 
 app.use(morgan('dev'));
 
 app.use(helmet());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-
 
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*'); 
@@ -28,6 +28,7 @@ app.use((req, res, next) => {
 });
 
 app.use("/form", formRoute);
+app.use("/questoes", questaoRoute);
 
 app.use((req, res, next) => {
     const error = new Error('Not found...');
