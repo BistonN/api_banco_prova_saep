@@ -64,5 +64,27 @@ exports.execute = (query, params = [], var_pool = pool) => {
     });
 }
 
+exports.checkConnection = (var_pool = pool) => {
+    return new Promise((resolve, reject) => {
+        var_pool.getConnection((error, connection) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+
+            connection.ping((pingError) => {
+                connection.release();
+
+                if (pingError) {
+                    reject(pingError);
+                    return;
+                }
+
+                resolve(true);
+            });
+        });
+    });
+}
+
 exports.pool = pool;
 exports.pool_multi = pool_multi;
