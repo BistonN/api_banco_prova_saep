@@ -10,8 +10,7 @@ const pool = mysql.createPool({
     "waitForConnections": true,
     "connectionLimit": 10,
     "queueLimit": 0,
-    "enableKeepAlive": true,
-    "keepAliveInitialDelayMs": 0
+    "enableKeepAlive": true
 });
 
 pool.on('error', (error) => {
@@ -46,8 +45,7 @@ const pool_multi = mysql.createPool({
     "waitForConnections": true,
     "connectionLimit": 10,
     "queueLimit": 0,
-    "enableKeepAlive": true,
-    "keepAliveInitialDelayMs": 0
+    "enableKeepAlive": true
 });
 
 pool_multi.on('error', (error) => {
@@ -62,6 +60,28 @@ exports.execute = (query, params = [], var_pool = pool) => {
             } else {
                 resolve(results);
             }
+        });
+    });
+}
+
+exports.checkConnection = (var_pool = pool) => {
+    return new Promise((resolve, reject) => {
+        var_pool.getConnection((error, connection) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+
+            connection.ping((pingError) => {
+                connection.release();
+
+                if (pingError) {
+                    reject(pingError);
+                    return;
+                }
+
+                resolve(true);
+            });
         });
     });
 }

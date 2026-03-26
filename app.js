@@ -3,8 +3,10 @@ const app = express();
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const helmet = require('helmet');
+const mysql = require('./mysql');
 
 const formRoute = require("./src/routes/form.route");
+const questaoRoute = require("./src/routes/questao.route");
 
 app.use(morgan('dev'));
 
@@ -26,7 +28,27 @@ app.use((req, res, next) => {
     next();
 });
 
+app.get('/status', async (req, res) => {
+    try {
+        await mysql.checkConnection();
+
+        return res.status(200).json({
+            api: 'online',
+            database: 'connected',
+            message: 'API conectada ao banco com sucesso'
+        });
+    } catch (error) {
+        return res.status(503).json({
+            api: 'online',
+            database: 'disconnected',
+            message: 'API online, mas sem conexao com o banco',
+            error: error.message
+        });
+    }
+});
+
 app.use("/form", formRoute);
+app.use("/questoes", questaoRoute);
 
 app.use((req, res, next) => {
     const error = new Error('Not found...');

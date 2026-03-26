@@ -3,7 +3,7 @@ const mysql = require("../../mysql");
 
 exports.createFormToken = async (req, res, next) => {
     try {
-        const { questions } = req.body;
+        const { questions, tempo_minutos } = req.body;
 
         if (!questions || !Array.isArray(questions) || questions.length === 0) {
             return res.status(400).json({
@@ -20,6 +20,7 @@ exports.createFormToken = async (req, res, next) => {
         res.locals.subToken = token;
         res.locals.fullToken = hash;
         res.locals.questionsIds = ids;
+        res.locals.tempoMinutos = typeof tempo_minutos === 'number' && tempo_minutos > 0 ? tempo_minutos : 170;
 
         next()
     } catch (error) {
@@ -32,7 +33,7 @@ exports.createFormToken = async (req, res, next) => {
 
 exports.insertFormToken = async (req, res, next) => {
     try {
-        const { subToken, fullToken, questionsIds } = res.locals;
+        const { subToken, fullToken, questionsIds, tempoMinutos } = res.locals;
 
         if (!subToken || !fullToken || !questionsIds) {
             return res.status(400).json({
@@ -40,13 +41,14 @@ exports.insertFormToken = async (req, res, next) => {
             });
         }
 
-        for (const questionId of questionsIds) {
-            const query = `
-                INSERT INTO provas (id_questao, sub_token, full_token)
-                VALUES (?, ?, ?)
-            `;
-            
-            await mysql.execute(query, [questionId, subToken, fullToken]);
+        if (questionsIds.length > 0) {
+            const placeholders = questionsIds.map(() => '(?, ?, ?, ?)').join(', ');
+            const query = `INSERT INTO provas (id_questao, sub_token, full_token, tempo_minutos) VALUES ${placeholders}`;
+            const params = [];
+            for (const questionId of questionsIds) {
+                params.push(questionId, subToken, fullToken, tempoMinutos);
+            }
+            await mysql.execute(query, params);
         }
 
         return res.status(201).json({
@@ -54,6 +56,7 @@ exports.insertFormToken = async (req, res, next) => {
             subToken,
             fullToken,
             questionsCount: questionsIds.length,
+            tempo_minutos: tempoMinutos
         });
     } catch (error) {
         return res.status(500).json({
@@ -84,9 +87,14 @@ exports.getForms = async (req, res) => {
 
         const questions = await mysql.execute(query, [token]);
 
+        // também buscar tempo da prova (se definido)
+        const tempoRows = await mysql.execute(`SELECT tempo_minutos FROM provas WHERE sub_token = ? LIMIT 1;`, [token]);
+        const tempo_minutos = (tempoRows && tempoRows[0] && tempoRows[0].tempo_minutos) ? tempoRows[0].tempo_minutos : null;
+
         return res.status(200).json({
             message: "Get questions successfully",
-            results: questions
+            results: questions,
+            tempo_minutos
         });
     } catch (error) {
            return res.status(500).json({
@@ -216,5 +224,84 @@ exports.getAllAnswerByStudent = async (req, res) => {
             message: "Error getting data",
             error: error.message,
         });
+    }
+}
+
+exports.getAreas = async (req, res) => {
+    try {
+        const areas = await mysql.execute(`SELECT id, area FROM areas ORDER BY area;`);
+        return res.status(200).json({ message: 'Get areas successfully', results: areas });
+    } catch (error) {
+        return res.status(500).json({ message: 'Error getting areas', error: error.message });
+    }
+}
+
+// Retorna todas as questões, com nome da área (se houver), para uso em UI de seleção
+exports.getAllQuestions = async (req, res) => {
+    try {
+        const query = `
+            SELECT q.id,
+                   q.titulo,
+                   q.id_area,
+                   a.area AS area
+              FROM questoes q
+         LEFT JOIN areas a ON a.id = q.id_area
+          ORDER BY a.area IS NULL, a.area, q.id;
+        `;
+        const rows = await mysql.execute(query);
+        return res.status(200).json({ message: 'Get all questions', results: rows });
+    } catch (error) {
+        console.error('Error getting all questions:', error);
+        return res.status(500).json({ message: 'Error getting all questions', error: error.message });
+    }
+}
+
+// Retorna respostas por aluno para um token (última resposta por questão por aluno)
+exports.getResults = async (req, res) => {
+    try {
+        const token = req.params.token;
+
+        const query = `
+            SELECT nome,
+                   email,
+                   id_questao,
+                   UPPER(resposta_aluno) AS resposta_aluno,
+                   UPPER(resposta_certa) AS resposta_certa,
+                   CASE WHEN UPPER(resposta_aluno) = UPPER(resposta_certa) THEN 1 ELSE 0 END AS correct,
+                   token,
+                   created
+              FROM (
+                SELECT nome,
+                       email,
+                       id_questao,
+                       resposta_aluno,
+                       resposta_certa,
+                       token,
+                       created,
+                       ROW_NUMBER() OVER (PARTITION BY nome, id_questao ORDER BY created DESC) AS rn
+                  FROM respostas
+                 WHERE token = ?
+              ) AS sub
+             WHERE rn = 1
+             ORDER BY nome, id_questao;
+        `;
+
+        const rows = await mysql.execute(query, [token]);
+
+        // Agregar por aluno: total de questões e acertos
+        const summary = {};
+        rows.forEach(r => {
+            const key = r.nome || '---';
+            if (!summary[key]) summary[key] = { nome: r.nome, email: r.email, total: 0, correct: 0 };
+            summary[key].total += 1;
+            summary[key].correct += Number(r.correct || 0);
+        });
+
+        const summaryList = Object.values(summary).map(s => ({ nome: s.nome, email: s.email, total: s.total, correct: s.correct }));
+
+        return res.status(200).json({ message: 'Get results successfully', results: rows, summary: summaryList });
+    } catch (error) {
+        console.error('Error getting results:', error);
+        return res.status(500).json({ message: 'Error getting results', error: error.message });
     }
 }
